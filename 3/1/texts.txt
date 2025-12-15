@@ -1,0 +1,2 @@
+. example ..text.,;:?!()[]
+Tách từ theo dấu cách, đếm số lần xuất hiện của từng từ
