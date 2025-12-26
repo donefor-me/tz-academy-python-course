@@ -1,33 +1,27 @@
 from app.models.todo_model import TodoModel
 from app.repositories.todo_repository import TodoRepository
+from cores.database import SessionLocal
 
 
 def init_todo() -> None:
-    todo_1 = TodoModel(
-        todo_id=TodoRepository.next_id(),
-        title="Nghiên cứu thị trường",
-        description="Tìm hiểu xu hướng mới nhất trong lĩnh vực AI",
-        priority=1,
-        done=False,
-    )
+    tasks_data = [
+        {"title": "Nghiên cứu thị trường", "priority": 1, "done": False},
+        {"title": "Gửi email nhắc nhở", "priority": 2, "done": True},
+        {"title": "Sắp xếp thư mục Drive", "priority": 3, "done": False},
+    ]
+    db = SessionLocal()
+    repo = TodoRepository()
+    try:
+        todo_objs = [TodoModel(**data) for data in tasks_data]
+        repo.bulk_create(db, todo_objs)
+        db.commit()
+        print(f"Successfully initialized {len(todo_objs)} tasks.")
+    except Exception as e:
+        db.rollback()
+        print(f"Error during initialization: {e}")
+    finally:
+        db.close()
 
-    todo_2 = TodoModel(
-        todo_id=TodoRepository.next_id(),
-        title="Gửi email nhắc nhở",
-        description="Nhắc nhở đội ngũ về deadline sắp tới",
-        priority=2,
-        done=True,
-    )
 
-    todo_3 = TodoModel(
-        todo_id=TodoRepository.next_id(),
-        title="Sắp xếp thư mục Drive",
-        description=None,
-        priority=3,
-        done=False,
-    )
-
-    tasks = [todo_1, todo_2, todo_3]
-
-    for task in tasks:
-        TodoRepository.add(task)
+if __name__ == "__main__":
+    init_todo()

@@ -10,4 +10,4 @@ class Priority(IntEnum):
 
 
 class Measurement(IntEnum):
-    MIN_TITLE = 3
+    MIN_TITLE_LENGTH = 3

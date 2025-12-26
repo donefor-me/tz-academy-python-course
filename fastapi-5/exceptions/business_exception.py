@@ -1,31 +1,31 @@
-from base_exception import BusinessException
+from exceptions.base_exception import BusinessException
 
 
-class StudentNotFoundException(BusinessException):
-    def __init__(self, student_id: int):
+class TodoNotFoundException(BusinessException):
+    def __init__(self, todo_id: int):
         super().__init__(
-            message=f"Student {student_id} not found",
-            error_code="STUDENT_NOT_FOUND",
+            message=f"Todo with id {todo_id} not found",
+            error_code="TODO_NOT_FOUND",
             status_code=404,
-            extra={"student_id": student_id},
+            extra={"todo_id": todo_id},
         )
 
 
-class StudentEmailAlreadyExistsException(BusinessException):
-    def __init__(self, email: str):
+class TodoTitleAlreadyExistsException(BusinessException):
+    def __init__(self, title: str):
         super().__init__(
-            message="Email already exists",
-            error_code="EMAIL_ALREADY_EXISTS",
+            message=f"Todo title '{title}' already exists",
+            error_code="TODO_TITLE_ALREADY_EXISTS",
             status_code=409,
-            extra={"email": email},
+            extra={"title": title},
         )
 
 
-class InvalidStudentAgeException(BusinessException):
-    def __init__(self, age: int):
+class InvalidTodoPriorityException(BusinessException):
+    def __init__(self, priority: int):
         super().__init__(
-            message="Age must be >= 18",
-            error_code="INVALID_STUDENT_AGE",
+            message="Priority must be between 1 and 5",
+            error_code="INVALID_TODO_PRIORITY",
             status_code=400,
-            extra={"age": age},
+            extra={"priority": priority},
         )

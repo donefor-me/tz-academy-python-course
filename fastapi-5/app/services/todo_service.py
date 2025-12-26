@@ -1,83 +1,52 @@
+from sqlalchemy.orm import Session
+
 from app.repositories.todo_repository import TodoRepository
+from exceptions.business_exception import TodoNotFoundException
 from schemas.requests.todo_request import TodoRequest, TodoUpdate
 from schemas.responses.todo_response import TodoResponse
 from app.models.todo_model import TodoModel
-from fastapi import HTTPException, status
 
 
 class TodoService:
-    def __init__(self):
-        self.todo_repo = TodoRepository()
+    def __init__(self, db_session: Session):
+        self.db_session = db_session
+        self.todo_repository = TodoRepository()
 
-    def _get_todo_or_raise(self, todo_id: int) -> TodoModel:
-        """Helper private method: find todo or raise 404."""
-        todo = self.todo_repo.find_by_id(todo_id)
-        if not todo:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Todo with id {todo_id} not found",
-            )
-        return todo
-
-    def create_todo(self, requests: list[TodoRequest]) -> list[TodoResponse]:
-        """
-        Create a new todo and return its response model.
-        Return: TodoResponse
-        Raise: 404 if not found
-        """
-        result: list[TodoResponse] = []
-        for request in requests:
-            todo = TodoModel(
-                todo_id=TodoRepository.next_id(),
-                title=request.title,
-                description=request.description,
-                priority=request.priority,
-                done=request.done,
-            )
-            self.todo_repo.add(todo)
-            result.append(TodoResponse.model_validate(todo))
-
-        return result
+    def create_todo(self, requests: TodoRequest) -> TodoResponse:
+        created_objs = self.todo_repository.create(self.db_session, TodoModel(
+            title=requests.title,
+            description=requests.description,
+            priority=requests.priority,
+            done=requests.done,
+        ))
+        return TodoResponse.model_validate(created_objs)
 
     def update_todo(self, request: TodoUpdate) -> TodoResponse:
-        """
-        Update an existing todo (partial update supported).
-        Return: TodoResponse
-        Raise: 404 if not found
-        """
         existed_todo = self._get_todo_or_raise(request.todo_id)
-
-        if request.title is not None:
-            existed_todo.title = request.title
-        if request.description is not None:
-            existed_todo.description = request.description
-        if request.priority is not None:
-            existed_todo.priority = request.priority
-        if request.done is not None:
-            existed_todo.done = request.done
-
-        self.todo_repo.update(existed_todo)
-        return TodoResponse.model_validate(existed_todo)
+        # Remove None
+        normalized_data = request.model_dump(exclude_unset=True)
+        updated_todo = self.todo_repository.update(self.db_session, existed_todo, normalized_data)
+        return TodoResponse.model_validate(updated_todo)
 
     def get_by_id(self, todo_id: int) -> TodoResponse:
-        """
-        Retrieve a todo by ID.
-        Return: TodoResponse
-        Raise: 404 if not found
-        """
         todo = self._get_todo_or_raise(todo_id)
         return TodoResponse.model_validate(todo)
 
     def delete_by_id(self, todo_id: int) -> None:
-        """
-        Delete a todo by ID.
-        Return: None
-        Raise: 404 if not found
-        """
-        self._get_todo_or_raise(todo_id)
-        self.todo_repo.delete(todo_id)
+        existed_todo = self._get_todo_or_raise(todo_id)
+        self.todo_repository.delete(self.db_session, existed_todo)
 
-    def get_all_todos(self) -> list[TodoResponse]:
-        """Get all todo"""
-        todos = self.todo_repo.get_todos()
+    def get_all_todos(self, offset: int, limit: int) -> list[TodoResponse]:
+        todos = self.todo_repository.get_all(self.db_session, offset=offset, limit=limit)
         return [TodoResponse.model_validate(t) for t in todos]
+
+    def find_by_title(self, title: str, offset: int, limit: int) -> list[TodoResponse]:
+        founded = self.todo_repository.get_by_title(self.db_session, title, offset, limit)
+        return [TodoResponse.model_validate(t) for t in founded]
+
+    def _get_todo_or_raise(self, todo_id: int) -> TodoModel:
+        """Helper private method: find todo or raise 404."""
+        todo = self.todo_repository.get_by_id(self.db_session, todo_id)
+        if not todo:
+            raise TodoNotFoundException(todo_id)
+        return todo

@@ -3,7 +3,7 @@ from cores.enums import Priority
 
 
 class TodoResponse(BaseModel):
-    todo_id: int
+    id: int
     title: str
     description: str | None
     priority: Priority

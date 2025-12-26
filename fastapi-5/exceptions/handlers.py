@@ -1,8 +1,7 @@
-# cores/exceptions/exception_handlers.py
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from business_exception import BusinessException
+from exceptions.business_exception import BusinessException
 from schemas.responses.error_response import ErrorResponse
 
 

@@ -8,7 +8,7 @@ from app.models.base import TimeMixin, Base
 class TodoModel(TimeMixin, Base):
     __tablename__ = "todo"
     __table_args__ = (
-        UniqueConstraint("title", name="uq_todo_title")
+        UniqueConstraint("title", name="uq_todo_title"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
